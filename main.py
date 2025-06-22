@@ -1,10 +1,26 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
+from pathlib import Path
 import sqlite3
 import string
 import random
 
+
+
+
 app = FastAPI()
+
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/", response_class=HTMLResponse)
+
+async def root():
+    index_file = Path("static/index.html").read_text()
+    return HTMLResponse(content=index_file, status_code=200)
+
 
 app.add_middleware(
     CORSMiddleware,

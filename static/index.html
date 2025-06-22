@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+  <style>
+  body {
+    background: linear-gradient(#fceabb, #f8b500);
+    font-family: 'Fredoka One', sans-serif;
+    text-align: center;
+    color: #333;
+    padding: 20px;
+    
+  }
+
+  input, button {
+    padding: 10px 15px;
+    margin: 8px;
+    border-radius: 20px;
+    border: none;
+    font-size: 16px; 
+    outline: none;
+  }
+
+  input {
+    border: 2px solid #ffcc00;
+  }
+
+  button {
+    background-color: #ffcc00;
+    color: #222;
+    cursor: pointer;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    transition: all 0.2s ease-in-out;
+  }
+
+  button:hover {
+    background-color: #ffd633;
+    transform: scale(1.05);
+  }
+
+  #lobby {
+    background: #fff5cc;
+    border-radius: 30px;
+    padding: 20px;
+    margin-top: 30px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  li {
+    padding: 5px;
+    margin: 5px auto;
+    background: #ffe680;
+    border-radius: 10px;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  </style>
+  <title>Lobby</title>
+</head>
+<body>
+  <h2>Create or Join Room</h2>
+  <input id="name" placeholder="Your Name" /><br><br>
+
+  <button onclick="createRoom()">Create Room</button>
+  <input id="room_code" placeholder="Room Code" />
+  <button onclick="joinRoom()">Join Room</button>
+
+  <div id="lobby" style="display:none;">
+    <h3>Room Code: <span id="room_display"></span></h3>
+    <h4>Players:</h4>
+    <ul id="players_list"></ul>
+  </div>
+
+  <script>
+    let currentRoom = "";
+
+    function createRoom() {
+      const name = document.getElementById("name").value;
+      fetch("http://localhost:8000/create_room", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name })
+      })
+      .then(res => res.json())
+      .then(data => {
+        currentRoom = data.room_code;
+        document.getElementById("room_display").textContent = currentRoom;
+        showLobby();
+      });
+    }
+
+    function joinRoom() {
+      const name = document.getElementById("name").value;
+      const room_code = document.getElementById("room_code").value;
+      fetch("http://localhost:8000/join_room", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, room_code })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.joined) {
+          currentRoom = room_code;
+          document.getElementById("room_display").textContent = currentRoom;
+          showLobby();
+        }
+      });
+    }
+
+    function showLobby() {
+      document.getElementById("lobby").style.display = "block";
+      setInterval(updatePlayers, 1000);
+    }
+
+    function updatePlayers() {
+      fetch(`http://localhost:8000/players/${currentRoom}`)
+        .then(res => res.json())
+        .then(data => {
+          const list = document.getElementById("players_list");
+          list.innerHTML = "";
+          data.players.forEach(name => {
+            const li = document.createElement("li");
+            li.textContent = name;
+            list.appendChild(li);
+          });
+        });
+    }
+  </script>
+</body>
+</html>
